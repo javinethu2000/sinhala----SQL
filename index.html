@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sinhala to SQL Web App</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 600px; margin: auto; }
+        label, textarea, input { display: block; width: 100%; margin-bottom: 10px; }
+        .output { 
+            background: #f4f4f4; 
+            padding: 10px; 
+            border-radius: 5px; 
+            margin-top: 20px; 
+            display: none;
+        }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Sinhala → SQL Web App</h2>
+    <form id="queryForm">
+        <label for="sinhala">Enter Sinhala Query:</label>
+        <textarea id="sinhala" rows="3" required></textarea>
+        <label for="division">Division Name/Number:</label>
+        <input id="division" type="text" required placeholder="e.g. MyDivision">
+        <input type="submit" value="Submit">
+    </form>
+    <div id="output" class="output"></div>
+    <div id="error" class="error"></div>
+</div>
+<script>
+    document.getElementById('queryForm').onsubmit = async function(e) {
+        e.preventDefault();
+        document.getElementById('output').style.display = 'none';
+        document.getElementById('error').textContent = '';
+        const sinhala = document.getElementById('sinhala').value;
+        const division = document.getElementById('division').value;
+        try {
+            const res = await fetch('/process_sinhala', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sinhala, division })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                document.getElementById('error').textContent = data.error || 'Error occurred.';
+                return;
+            }
+            let html = `<b>Translation:</b> ${data.translation}<br>`;
+            html += `<b>Entities:</b> ${data.entities}<br>`;
+            html += `<b>Keywords:</b> ${data.keywords}<br>`;
+            html += `<b>SQL Query:</b> ${data.sql}<br>`;
+            html += `<hr><b>Full Output:</b><pre>${data.full_output}</pre>`;
+            document.getElementById('output').innerHTML = html;
+            document.getElementById('output').style.display = 'block';
+        } catch (err) {
+            document.getElementById('error').textContent = 'Request failed.';
+        }
+    };
+</script>
+</body>
+</html>
